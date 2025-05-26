@@ -1,7 +1,10 @@
 import { join } from 'path'
+import { promises as fsp } from 'fs'
 import camelCase from 'camelcase'
-import globby from 'globby'
+import { globby } from 'globby'
 import type { Nitro } from 'nitropack'
+export { parseParams } from './params'
+import { parseParams } from './params'
 
 export interface NitroQuillOptions {
   /** Directory containing SQL files relative to project root. Default: `api` */
@@ -29,7 +32,11 @@ export default function nitroQuill(nitro: Nitro, options: NitroQuillOptions = {}
 
       const handlerId = `nitro-quill:${file}`.replace(/[\\/]/g, '-')
       const virtualPath = `${handlerId}.ts`
-      nitro.options.virtual![virtualPath] = createHandler(join(base, file))
+
+      const fullPath = join(base, file)
+      const sql = await fsp.readFile(fullPath, 'utf8')
+      const params = parseParams(sql)
+      nitro.options.virtual![virtualPath] = createHandler(fullPath, params)
       nitro.options.handlers.push({
         route: routePath,
         method: 'get',
@@ -39,12 +46,8 @@ export default function nitroQuill(nitro: Nitro, options: NitroQuillOptions = {}
   })
 }
 
-function createHandler(sqlFile: string): string {
-  return `import { defineEventHandler } from 'h3'
-import { promises as fsp } from 'fs'
-export default defineEventHandler(async () => {
-  // TODO: parse directives and execute SQL against MSSQL
-  // placeholder simply returns the SQL file path
-  return { ok: true, file: ${JSON.stringify(sqlFile)} }
-})`
+function createHandler(sqlFile: string, params: Record<string, unknown>): string {
+  return `import { createHandler } from 'nitro-quill/handler'
+export default createHandler(${JSON.stringify(sqlFile)}, ${JSON.stringify(params)})
+`
 }
