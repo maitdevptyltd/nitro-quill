@@ -1,7 +1,11 @@
 import { join } from 'path'
 import camelCase from 'camelcase'
-import globby from 'globby'
+import { globby } from 'globby'
+import { readFileSync } from 'fs'
+import { parseParams } from './params'
 import type { Nitro } from 'nitropack'
+
+export { parseParams } from './params'
 
 export interface NitroQuillOptions {
   /** Directory containing SQL files relative to project root. Default: `api` */
@@ -40,11 +44,22 @@ export default function nitroQuill(nitro: Nitro, options: NitroQuillOptions = {}
 }
 
 function createHandler(sqlFile: string): string {
-  return `import { defineEventHandler } from 'h3'
-import { promises as fsp } from 'fs'
-export default defineEventHandler(async () => {
-  // TODO: parse directives and execute SQL against MSSQL
-  // placeholder simply returns the SQL file path
-  return { ok: true, file: ${JSON.stringify(sqlFile)} }
+  const sql = readFileSync(sqlFile, 'utf8')
+  const meta = parseParams(sql)
+  const metaJson = JSON.stringify(meta)
+  return `import { defineEventHandler, getQuery } from 'h3'
+export default defineEventHandler((event) => {
+  const query = getQuery(event)
+  const meta = ${metaJson}
+  const params = {}
+  for (const name in meta) {
+    if (query[name] !== undefined) {
+      const v = Array.isArray(query[name]) ? query[name][0] : query[name]
+      params[name] = v
+    } else if (meta[name].default !== undefined) {
+      params[name] = meta[name].default
+    }
+  }
+  return { file: ${JSON.stringify(sqlFile)}, params }
 })`
 }
