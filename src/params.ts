@@ -4,7 +4,6 @@ export interface ParamMeta {
   default?: string
 }
 
-/** Map MSSQL type names to simplified types */
 function mapType(t: string): ParamMeta['type'] | undefined {
   const type = t.toLowerCase()
   if (type.includes('int')) return 'int'
@@ -15,39 +14,49 @@ function mapType(t: string): ParamMeta['type'] | undefined {
   return undefined
 }
 
-export function parseParams(sql: string): Record<string, ParamMeta> {
-  const params: Record<string, ParamMeta> = {}
-  const lines = sql.split(/\r?\n/)
+export interface ParameterParser {
+  parse(sql: string): Record<string, ParamMeta>
+}
 
-  const directiveRe = /^\s*--\s*@param\s+(\w+)(?:\s*:\s*(\w+))?(?:\s*=\s*(.+))?$/i
-  for (const line of lines) {
-    const m = directiveRe.exec(line)
-    if (m) {
-      const [, name, typ, def] = m
-      params[name] = { name, type: typ ? typ.toLowerCase() as ParamMeta['type'] : undefined, default: def?.trim() }
-    }
-  }
+export class DefaultParameterParser implements ParameterParser {
+  parse(sql: string): Record<string, ParamMeta> {
+    const params: Record<string, ParamMeta> = {}
+    const lines = sql.split(/\r?\n/)
 
-  const declareRe = /^\s*DECLARE\s+@(\w+)\s+([^=;]+)(?:\s*=\s*([^;]+))?/i
-  for (const line of lines) {
-    const m = declareRe.exec(line)
-    if (m) {
-      const [, name, typ, def] = m
-      if (!params[name]) {
-        params[name] = { name, type: mapType(typ), default: def?.trim() }
+    const directiveRe = /^\s*--\s*@param\s+(\w+)(?:\s*:\s*(\w+))?(?:\s*=\s*(.+))?$/i
+    for (const line of lines) {
+      const m = directiveRe.exec(line)
+      if (m) {
+        const [, name, typ, def] = m
+        params[name] = { name, type: typ ? (typ.toLowerCase() as ParamMeta['type']) : undefined, default: def?.trim() }
       }
     }
-  }
 
-  const noCommentSql = lines.map(l => l.replace(/--.*$/, '')).join('\n')
-  const placeholderRe = /[@:](\w+)/g
-  let match: RegExpExecArray | null
-  while ((match = placeholderRe.exec(noCommentSql))) {
-    const name = match[1]
-    if (!params[name]) {
-      params[name] = { name }
+    const declareRe = /^\s*DECLARE\s+@(\w+)\s+([^=;]+)(?:\s*=\s*([^;]+))?/i
+    for (const line of lines) {
+      const m = declareRe.exec(line)
+      if (m) {
+        const [, name, typ, def] = m
+        if (!params[name]) {
+          params[name] = { name, type: mapType(typ), default: def?.trim() }
+        }
+      }
     }
-  }
 
-  return params
+    const noCommentSql = lines.map((l) => l.replace(/--.*$/, '')).join('\n')
+    const placeholderRe = /[@:](\w+)/g
+    let match: RegExpExecArray | null
+    while ((match = placeholderRe.exec(noCommentSql))) {
+      const name = match[1]
+      if (!params[name]) {
+        params[name] = { name }
+      }
+    }
+
+    return params
+  }
+}
+
+export function parseParams(sql: string): Record<string, ParamMeta> {
+  return new DefaultParameterParser().parse(sql)
 }
