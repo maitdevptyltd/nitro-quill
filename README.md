@@ -252,3 +252,12 @@ graph TD
     Q --> R[Register Route / Prepare Handler];
     R --> S[End Processing];
 ```
+
+## Development
+
+Install dependencies and build the plugin:
+```bash
+pnpm install
+pnpm run build
+```
+

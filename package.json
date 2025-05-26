@@ -1,0 +1,27 @@
+{
+  "name": "nitro-quill",
+  "version": "0.1.0",
+  "description": "Nitro plugin that turns SQL files into API endpoints",
+  "main": "dist/module.js",
+  "types": "dist/module.d.ts",
+  "scripts": {
+    "build": "tsup src/module.ts --dts --format esm,cjs --out-dir dist",
+    "dev": "tsup src/module.ts --watch --dts --format esm,cjs --out-dir dist",
+    "test": "node test/registration.test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "camelcase": "^7.0.0",
+    "globby": "^13.2.2",
+    "mssql": "^9.0.1"
+  },
+  "peerDependencies": {
+    "nitropack": "^2.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^7.0.0",
+    "typescript": "^5.0.0"
+  }
+}
