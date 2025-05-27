@@ -13,16 +13,17 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "camelcase": "^7.0.0",
-    "globby": "^13.2.2",
-    "mssql": "^9.0.1"
+    "camelcase": "^8.0.0",
+    "globby": "^14.1.0",
+    "mssql": "^11.0.1"
   },
   "peerDependencies": {
-    "nitropack": "^2.0.0"
+    "nitropack": "^2.11.12"
   },
   "devDependencies": {
-    "tsup": "^7.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitest": "^3.1.4"
   }
 }
