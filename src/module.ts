@@ -1,4 +1,5 @@
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 import { promises as fsp } from 'fs'
 import camelCase from 'camelcase'
 import { globby } from 'globby'
@@ -25,9 +26,12 @@ export default function nitroQuill(nitro: Nitro, options: NitroQuillOptions = {}
   nitro.options.handlers = nitro.options.handlers || []
   nitro.options.plugins = nitro.options.plugins || []
   nitro.options.virtual['nitro-quill:options'] = `export default ${JSON.stringify(options.connection || {})}`
-  nitro.options.plugins.push(join(__dirname, 'runtime'))
+  const dir = typeof __dirname !== 'undefined'
+    ? __dirname
+    : dirname(fileURLToPath(import.meta.url))
+  nitro.options.plugins.push(join(dir, 'runtime'))
 
-  nitro.hooks.hook('nitro:build:before', async () => {
+  nitro.hooks.hook('build:before', async () => {
     const base = join(nitro.options.rootDir, scanDir)
     const files = await globby('**/*.sql', { cwd: base })
 
@@ -56,7 +60,11 @@ export default function nitroQuill(nitro: Nitro, options: NitroQuillOptions = {}
 }
 
 function createHandler(meta: ParsedSql & { sqlFile: string }): string {
-  return `import { createHandler } from 'nitro-quill/handler'
+  const dir = typeof __dirname !== 'undefined'
+    ? __dirname
+    : dirname(fileURLToPath(import.meta.url))
+  const handlerPath = join(dir, 'handler').replace(/\\/g, '/')
+  return `import { createHandler } from '${handlerPath}'
 export default createHandler(${JSON.stringify(meta)})
 `
 }

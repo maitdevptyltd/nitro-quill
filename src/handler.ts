@@ -3,7 +3,7 @@ import type { ParamMeta } from './params'
 import type { AuthMeta } from './auth'
 import { createAuthStrategy } from './auth'
 import type { QueryExecutor } from './query'
-import { getGlobalPool, MssqlQueryExecutor } from './query'
+import { getGlobalPool, MssqlQueryExecutor, getGlobalExecutor } from './query'
 
 export interface HandlerSpec {
   sqlFile: string
@@ -59,9 +59,12 @@ class ParameterResolver {
 export function createHandler(spec: HandlerSpec, executor?: QueryExecutor) {
   const resolver = new ParameterResolver(spec.params, spec.method)
   const authenticator = createAuthStrategy(spec.auth)
-  const exec = executor || new MssqlQueryExecutor(getGlobalPool())
 
   return defineEventHandler(async (event) => {
+    const exec =
+      executor ||
+      getGlobalExecutor() ||
+      new MssqlQueryExecutor(getGlobalPool())
     if (event.node.req.method?.toUpperCase() !== spec.method) {
       throw createError({ statusCode: 405, statusMessage: 'Method Not Allowed' })
     }

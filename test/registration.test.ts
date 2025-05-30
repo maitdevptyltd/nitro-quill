@@ -17,7 +17,7 @@ describe('nitro-quill', () => {
       hooks: {
         cb: undefined as any,
         hook(event: string, fn: Function) {
-          if (event === 'nitro:build:before') this.cb = fn
+          if (event === 'build:before') this.cb = fn
         }
       }
     }
