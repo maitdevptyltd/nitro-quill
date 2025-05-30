@@ -11,13 +11,25 @@ declare global {
   var __nitroQuillExecutor: SqliteQueryExecutor | undefined
 }
 
-export default defineNitroPlugin(async () => {
+export default defineNitroPlugin(async (nitro) => {
+  let pool: mssql.ConnectionPool | undefined
+  let db: DatabaseSync | undefined
+
   if ((connection as any).driver === 'sqlite') {
-    const db = new DatabaseSync((connection as any).filename || ':memory:')
+    db = new DatabaseSync((connection as any).filename || ':memory:')
     global.__nitroQuillExecutor = new SqliteQueryExecutor(db)
   } else if (Object.keys(connection).length) {
-    const pool = new mssql.ConnectionPool(connection as any)
+    pool = new mssql.ConnectionPool(connection as any)
     await pool.connect()
     global.__nitroQuillPool = pool
   }
+
+  nitro.hooks.hook('close', async () => {
+    if (pool) {
+      await pool.close()
+    }
+    if (db) {
+      db.close()
+    }
+  })
 })
