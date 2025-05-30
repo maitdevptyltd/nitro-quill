@@ -24,3 +24,20 @@ export default defineNitroConfig({
 ## Usage
 
 Create `.sql` files under the configured directory. Each file becomes a route based on its path. See [SQL Directives](./sql-directives.md) for supported annotations.
+
+## SQLite Configuration
+
+`nitro-quill` can run against SQLite for quick local development or light-weight deployments. This uses Node's experimental `node:sqlite` module which is only available in **Node 22 or later**.
+
+Configure the plugin with an SQLite connection:
+
+```ts
+export default defineNitroConfig({
+  plugins: [nitroQuill({
+    directory: 'api',
+    connection: { driver: 'sqlite', filename: 'path/to/db.sqlite' }
+  })]
+})
+```
+
+Ensure your runtime uses Node 22+ when enabling this driver.
