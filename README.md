@@ -156,7 +156,7 @@ To include metadata useful for pagination (like total record count) in the respo
 
 **5. Technical Details & Caveats**
 
-* **Database:** MSSQL focus. Requires DB driver and connection configuration in the host Nitro app.
+* **Database:** MSSQL by default. SQLite is supported via `connection: { driver: 'sqlite', filename: 'path/to/db.sqlite' }` (requires Node 22+ for the experimental `node:sqlite` module). Requires DB driver and connection configuration in the host Nitro app.
 * **Security:** Relies on parameterized queries. Static bearer tokens.
 * **Performance & Memory:**
     * Using `-- @countQuery` executes an **additional database query**, potentially impacting performance.
