@@ -8,6 +8,8 @@ import nitroQuill from '../src/module'
 
 let server: ReturnType<typeof createDevServer>
 let url: string
+let closed = false
+const originalClose = DatabaseSync.prototype.close
 
 const setupModule = (dbPath: string) => ({
   async setup(nitro: any) {
@@ -17,6 +19,10 @@ const setupModule = (dbPath: string) => ({
 
 describe('integration with nitro runtime', () => {
   beforeAll(async () => {
+    DatabaseSync.prototype.close = function(this: any, ...args: any[]) {
+      closed = true
+      return originalClose.apply(this, args)
+    }
     const root = await fsp.mkdtemp(join(tmpdir(), 'quill-'))
     const apiDir = join(root, 'api')
     await fsp.mkdir(apiDir)
@@ -42,12 +48,22 @@ describe('integration with nitro runtime', () => {
   })
 
   afterAll(async () => {
-    await server.close()
+    if (server) {
+      await server.close()
+    }
+    DatabaseSync.prototype.close = originalClose
   })
 
   it('returns rows from sqlite', async () => {
     const res = await fetch(url + '/api/api/listUsers')
     const json = await res.json()
     expect(json).toEqual({ rows: [ { id: 1, name: 'Alice' }, { id: 2, name: 'Bob' } ] })
+  })
+
+  it('closes sqlite connection on shutdown', async () => {
+    await server.close()
+    expect(closed).toBe(true)
+    // prevent afterAll from closing again
+    server = undefined as any
   })
 })
