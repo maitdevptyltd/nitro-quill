@@ -9,12 +9,6 @@ import nitroQuill from '../src/module'
 let server: ReturnType<typeof createDevServer>
 let url: string
 
-const setupModule = (dbPath: string) => ({
-  async setup(nitro: any) {
-    await nitroQuill(nitro, { connection: { driver: 'sqlite', filename: dbPath } })
-  }
-})
-
 describe('integration with nitro runtime', () => {
   beforeAll(async () => {
     const root = await fsp.mkdtemp(join(tmpdir(), 'quill-'))
@@ -32,7 +26,9 @@ describe('integration with nitro runtime', () => {
       rootDir: root,
       dev: true,
       preset: 'nitro-dev',
-      modules: [setupModule(dbPath)]
+      modules: [
+        nitroQuill({ connection: { driver: 'sqlite', filename: dbPath } })
+      ]
     })
     await prepare(nitro)
     await build(nitro)

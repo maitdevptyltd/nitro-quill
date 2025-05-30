@@ -22,7 +22,8 @@ describe('nitro-quill', () => {
       }
     }
 
-    nitroQuill(nitro, {})
+    const module = nitroQuill({})
+    await module.setup(nitro as any)
     await nitro.hooks.cb()
 
     expect(nitro.options.handlers.length).toBe(2)

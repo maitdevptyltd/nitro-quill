@@ -8,13 +8,14 @@ This document explains how to install and configure **nitro-quill** in a Nitro p
 pnpm add nitro-quill
 ```
 
-Add the plugin in your `nitro.config.ts`:
+`nitro-quill` exports a Nitro module that automatically registers the runtime plugin.
+Add it in your `nitro.config.ts`:
 
 ```ts
 import nitroQuill from 'nitro-quill'
 
 export default defineNitroConfig({
-  plugins: [nitroQuill({
+  modules: [nitroQuill({
     directory: 'api',
     connection: { /* mssql connection options */ }
   })]
